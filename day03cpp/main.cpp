@@ -40,13 +40,32 @@ std::ostream& operator<<(std::ostream& os, const number_t n){
 std::vector<symbol_t> symbols;
 std::vector<number_t> numbers;
 
+void parse_line2(string line, int row){
+    std::replace(line.begin(), line.end(),'.',' ');
+    stringstream ss(line);
+    cout <<line <<endl;
+    string s;
+    char c;
+    int col = 0;
+    while (ss){
+        ss.get(c);
+        if (ss){
+            ++col;
+            if (isdigit(c))
+                s.push_back(c);
+        }
+    }
+    cout <<" s: " <<s << " gcount: "<< ss.gcount() <<endl;
+}
+
 void parse_line (string line, int row){
     auto start_it = std::find_if(line.begin(),line.end(),[](const char c) { return c != '.'; });
-    auto end_it = std::find_if(start_it,line.end(),[](const char c) { return c == '.'; });
+    auto end_it = std::find_if(start_it+1,line.end(),[](const char c) { return !isdigit(c); });
     auto start_pos = std::distance(line.begin(), start_it);
     auto stop_pos = end_it == line.end()? line.size() : std::distance(line.begin(), end_it);
     while (start_it != line.end()){
         auto substr_count = stop_pos - start_pos;
+        substr_count = std::max(substr_count,1UL);
         auto sub = line.substr(start_pos, substr_count);
         cout <<"PL: " <<sub <<endl;
         if (isdigit(sub[0])){
@@ -55,17 +74,33 @@ void parse_line (string line, int row){
             n.start.row = row;
             n.start.col = start_pos;
             n.end.row = row;
-            n.end.col = stop_pos;
+            n.end.col = stop_pos-1;
             numbers.push_back(n);
+            if (!isdigit(sub.back())){
+                substr_count -=1;
+            }
         } else {
            symbol_t s;
            s.sym = sub[0];
            s.pos.row = row;
            s.pos.col = start_pos;
            symbols.push_back(s);
+           if (isdigit(sub.back())){
+                number_t n;
+                sub.erase(0,1);
+                n.num = stoi(sub);
+                n.start.row = row;
+                n.start.col = start_pos+1;
+                n.end.row = row;
+                n.end.col = stop_pos-1;
+                numbers.push_back(n);
+                if (!isdigit(sub.back())){
+                    substr_count -=1;
+                }
+           }
         }
         start_it = std::find_if(start_it+substr_count,line.end(),[](const char c) { return c != '.'; });
-        end_it = std::find_if(start_it,line.end(),[](const char c) { return c == '.'; });
+        end_it = std::find_if(start_it+1,line.end(),[](const char c) { return !isdigit(c); });
         start_pos = std::distance(line.begin(), start_it);
         stop_pos = end_it == line.end()? line.size() : std::distance(line.begin(), end_it);
     }
@@ -80,8 +115,8 @@ vector<symbol_t> find_symbols_near_row(int row){
 }
 vector<symbol_t> find_symbols_near_cols(std::vector<symbol_t> syms, int start_col, int end_col){
        vector<symbol_t> valid_symbols;
-       auto start = std::stable_partition(syms.begin(), syms.end(), [start_col](symbol_t s){ return s.pos.row < start_col - 1; });
-       auto end = std::stable_partition(syms.begin(), syms.end(), [end_col](symbol_t s){ return s.pos.row <= end_col + 1; });
+       auto start = std::stable_partition(syms.begin(), syms.end(), [start_col](symbol_t s){ return s.pos.col < start_col - 1; });
+       auto end = std::stable_partition(syms.begin(), syms.end(), [end_col](symbol_t s){ return s.pos.col <= end_col + 1; });
        std::copy(start,end,std::back_inserter(valid_symbols));
        return valid_symbols;
 }
