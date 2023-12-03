@@ -85,6 +85,7 @@ int main(int argc, char* argv[]){
     uint64_t line_count = 0;
     uint64_t game_number;
     uint64_t sum = 0;
+    uint64_t power_sum = 0;
     while(getline(in,line)){
         if (line.empty()){
             ++line_count;
@@ -95,6 +96,8 @@ int main(int argc, char* argv[]){
         bool possible = (max_game.red <= 12) &&
                         (max_game.blue <= 14) &&
                         (max_game.green <= 13);
+        auto power = max_game.red * max_game.blue * max_game.green;
+        power_sum += power;
         cout <<"\nGame Id: " <<game_number ;
         if (possible){
             cout <<" is possible";
@@ -103,6 +106,7 @@ int main(int argc, char* argv[]){
         cout <<endl;
     }
     cout <<"Sum of game ids is: " <<sum<<endl;
+    cout <<"Sum of power is: " <<power_sum <<endl;
 
     return 0;
 }
