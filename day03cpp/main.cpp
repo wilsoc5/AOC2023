@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <map>
 #include <fstream>
 #include <algorithm>
 #include <iterator>
@@ -24,6 +25,11 @@ struct symbol_t {
     coord_t pos = {-1,-1};
 };
 
+bool operator<(const symbol_t a, const symbol_t b){
+    if (a.pos.row == b.pos.row) return a.pos.col < b.pos.col;
+    return a.pos.row < b.pos.row;
+}
+
 std::ostream& operator<<(std::ostream& os, const coord_t c){
     os <<"{ " <<c.row <<", " <<c.col <<"}";
     return os;
@@ -39,6 +45,7 @@ std::ostream& operator<<(std::ostream& os, const number_t n){
 
 std::vector<symbol_t> symbols;
 std::vector<number_t> numbers;
+std::map<symbol_t,vector<number_t>> gears;
 
 void parse_line2(string line, int row){
     std::replace(line.begin(), line.end(),'.',' ');
@@ -185,6 +192,9 @@ int main(int argc, char* argv[]){
         cout <<"find_symbols_near_cols("<<sc <<", " <<ec <<"):\n";
         for (const auto& s : s3){
             cout <<"\t" <<s <<endl;
+            if (s.sym == '*'){
+                gears[s].push_back(n);
+            }
         }
         n.pn = !(s3.empty());
         if (n.pn){
@@ -196,6 +206,34 @@ int main(int argc, char* argv[]){
         cout <<"\t" <<n <<endl;
     }
     cout <<"PN Sum: " <<pnsum <<endl;
+
+    cout <<" Gears: " <<endl;
+    for (auto g = gears.begin(); g != gears.end(); ){
+        cout <<"\t" <<g->first << ": " <<endl;
+        auto gear_count = g->second.size();
+        for (const auto& s : g->second){
+            cout <<"\t\t" <<s <<endl;
+        }
+        if (gear_count == 1){
+            g = gears.erase(g);
+            cout << "\t\t not a gear."<<endl;
+        } else {
+            ++g;
+        }
+    }
+   
+    uint64_t gear_sum = 0;
+    for (const auto& g : gears){
+        uint64_t gear_product = 1;
+        for (const auto& n : g.second){
+            gear_product *= n.num;
+        }
+        gear_sum += gear_product;
+        cout <<"\tGear product: " <<gear_product <<endl;
+        cout <<"\tGear sum: " <<gear_sum <<endl;
+    }
+
+    cout <<"Gear sum: " <<gear_sum <<endl;
 
     return 0;
 }
