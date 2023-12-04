@@ -128,12 +128,6 @@ vector<symbol_t> find_symbols_near_cols(std::vector<symbol_t> syms, int start_co
        return valid_symbols;
 }
 
-void find_parts(){
-    //for(auto& p: numbers){
-        //std::stable_partition(symbols.begin(), symbols.end(), [](const symbol_t& s){ return s.pos.row < p.end.row; };
-    //}
-}
-
 int main(int argc, char* argv[]){
     if (argc < 2){
         cout <<"Usage " <<argv[0] <<" <input file>" <<endl;
@@ -154,7 +148,6 @@ int main(int argc, char* argv[]){
         parse_line(line, line_count);
         ++line_count;
     }
-    find_parts();
     cout <<"Symbols: " <<endl;
     for (const auto& s : symbols){
         cout <<"\t" <<s <<endl;
