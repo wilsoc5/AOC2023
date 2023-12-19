@@ -43,8 +43,15 @@ struct note_t{
     int location = -1;
     vector<int> possible_col_locations;
     vector<int> possible_row_locations;
+    int value = 0;
 };
 typedef vector<note_t> notes_t;
+
+note_t operator+(const note_t& lhs, const note_t& rhs){
+    note_t n;
+    n.value = lhs.value + rhs.value;
+    return n;
+}
 
 ostream& operator<<(ostream& os, const note_t& n){
     for (auto& l : n.lines){
@@ -53,6 +60,7 @@ ostream& operator<<(ostream& os, const note_t& n){
     os <<" ishoriz: " <<boolalpha <<n.ishoriz <<" \t" <<n.location <<endl;
     os <<" prl: " <<n.possible_row_locations <<endl;
     os <<" pcl: " <<n.possible_col_locations <<endl;
+    os <<" value: " <<n.value <<endl;
     return os;
 }
 
@@ -73,7 +81,7 @@ bool check_match(string line, int col_split){
 
 bool check_match_rows(vector<string> lines, int row_split){
     auto it = lines.begin();
-    std::advance(it, row_split + 1);
+    std::advance(it, row_split);
     auto rit = std::make_reverse_iterator(it);
     bool match = true;
     while (!((it == lines.end() || rit == lines.rend()))){
@@ -96,43 +104,57 @@ notes_t parse_input(ifstream& in){
     string line;
     notes_t ns;
     note_t n;
-    while(getline(in,line)){
-        if (in){
-            if (!line.empty()){
-                if (!n.lines.empty()){
-                    if (n.lines.back() == line){
-                        n.possible_row_locations.push_back(int(n.lines.size()));
-                    }
-                }
-                n.lines.push_back(line);
-                if (n.lines.size() == 1){
-                    for (int i = 1; i < line.size() - 1 ; ++i){
-                        bool match= check_match(line,i);
-                        if (match)
-                            n.possible_col_locations.push_back(i);
-                    }
-                } else {
-                    for (auto it = std::begin(n.possible_col_locations); it != std::end(n.possible_col_locations); ){
-                        bool match = check_match(line,*it);
-                        if (match) ++it;
-                        else it = n.possible_col_locations.erase(it);
-                    }
+    auto finish = [&](){
+            check_rows(n);
+            if (n.possible_col_locations.size() > 0){
+                n.ishoriz = false;
+                if (!(n.possible_col_locations.empty())){
+                    n.location = n.possible_col_locations.front();
+                    n.value = n.location;
                 }
             } else {
-                check_rows(n);
-                if (n.possible_col_locations.size() > 0){
-                    n.ishoriz = false;
-                    n.location = n.possible_col_locations.front();
-                } else {
-                    n.ishoriz = true;
+                n.ishoriz = true;
+                if (!(n.possible_row_locations.empty())){
                     n.location = n.possible_row_locations.front();
+                    n.value = n.location * 100;
                 }
-                ns.push_back(n);
-                note_t n2;
-                swap(n,n2);
             }
+            ns.push_back(n);
+            n = note_t{} ;
+    };
+    bool run_last = false;
+    while(getline(in,line)){
+        if (!line.empty()){
+            if (!n.lines.empty()){
+                if (n.lines.back() == line){
+                    n.possible_row_locations.push_back(int(n.lines.size()));
+                }
+            }
+            n.lines.push_back(line);
+            if (n.lines.size() == 1){
+                for (int i = 1; i < line.size() - 1 ; ++i){
+                    bool match = check_match(line,i);
+                    if (match)
+                        n.possible_col_locations.push_back(i);
+                }
+            } else {
+                for (auto it = std::begin(n.possible_col_locations); it != std::end(n.possible_col_locations); ){
+                    bool match = check_match(line,*it);
+                    if (match) ++it;
+                    else it = n.possible_col_locations.erase(it);
+                }
+            }
+            run_last = true;
+        } else {
+            finish();
+            run_last = false;
         }
     }
+    if(run_last){
+        finish();
+    }
+    
+    cout <<in.good() <<endl;
     return ns;
 }
 
@@ -152,6 +174,11 @@ int main(int argc, char* argv[]){
     auto notes = parse_input(in);
     cout <<"Read file: " <<endl;
     cout <<notes;
+    
+    
+    note_t n;
+    auto sum = std::accumulate(std::begin(notes), std::end(notes),n);
+    cout <<"Sum: " <<sum <<endl;
 
     return 0;
 }
