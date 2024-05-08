@@ -1,4 +1,5 @@
 CMake*.txt
+build/*.txt
 */*cppxcode
 build/day*cpp
 buildX
