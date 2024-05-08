@@ -10,6 +10,7 @@
 #include <iterator>
 #include <set>
 #include <deque>
+#include <queue>
 
 using namespace std;
 
@@ -301,6 +302,18 @@ bool walk(const map_t& map, coord_t oldpos, direction_t d, map_t& emap, set<coor
     return true;
 }
 
+struct result_t{
+    mapping_t input;
+    int energized;
+
+};
+bool operator<(const result_t& a, const result_t& b){
+    return a.energized < b.energized;
+}
+ostream& operator<<(ostream& os, const result_t& p){
+    os <<"{ " <<p.input<<" = " <<p.energized<<" }";
+    return os;
+}
 
 int main(int argc, char* argv[]){
     using std::begin, std::end;
@@ -326,12 +339,16 @@ int main(int argc, char* argv[]){
        cout <<n <<endl;
     }
 
+    coord_t pos = std::make_pair(0,-1);
+    direction_t d = EAST;
+    auto part1func = [&map](coord_t pos, direction_t d)-> result_t{
+    result_t res;
+    res.input.first = pos;
+    res.input.second = d;
     std::set<coord_t> energized;
     std::set<mapping_t> map_set;
     std::deque<mapping_t> pending_list;
     auto emap = map;
-    coord_t pos = std::make_pair(0,-1);
-    direction_t d = EAST;
     bool cont = false;
     pending_list.emplace_back(std::make_pair(pos,d));
     while (!pending_list.empty()){
@@ -341,21 +358,32 @@ int main(int argc, char* argv[]){
         pending_list.pop_front();
         std::cout <<"Walking " <<d <<" from " <<pos <<endl ;
         walk(map, pos, d, emap, energized, map_set, pending_list);
-
     }
-    auto count = 0; 
-    for (auto n : emap){
-        count += std::count(n.begin(), n.end(), '#');
-    }
-    cout <<"\n==========\n";
-    cout <<"Energized count: " <<count<<endl;
-    cout <<"Energized: " <<energized.size()<<endl;
-    //cout <<"Energized: " <<energized<<endl;
+    cout <<"Part 1 Energized: " <<energized.size()<<endl;
+    res.energized = energized.size();
+    return res;
+    };
+     
+    auto part1 = part1func(pos,d);
 
-    //for (auto n : emap){
-    //   cout <<n <<endl;
-    //}
     
+    //Part 2
+    std::priority_queue<result_t> pq;
+    pq.push(part1); 
+
+    auto row_size = map.size();
+    auto col_size = map[0].size();
+    for (int i = 0; i < row_size; ++i){
+        pq.push(part1func(std::make_pair(i,-1), EAST));
+        pq.push(part1func(std::make_pair(i,col_size), WEST));
+    }
+    for (int j = 0; j < col_size; ++j){
+        pq.push(part1func(std::make_pair(-1,j), SOUTH));
+        pq.push(part1func(std::make_pair(row_size,j), NORTH));
+    }
+
+    std::cout <<"Max entry: " <<pq.top() <<endl;
+
     return 0;
 }
 
